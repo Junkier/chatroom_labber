@@ -57,9 +57,16 @@ app.get("/",(q,s)=>{
 });
 
 app.get("/page",async (q,s)=>{
-    let no = await getCache("users");
-    no = Number(no) +1;
-    await setCache("users" , no);
+
+    // 會有 race condition 問題
+    // let no = await getCache("users");
+    // no = Number(no) +1;
+    // await setCache("users" , no);
+
+    // 改用 incr , 變單一原子操作
+    // 拔除 race condition !!! 
+    let no = await redisClient.incr("users");
+
     s.render("testqq.html",{ no });
 });
 
@@ -71,7 +78,6 @@ app.get("/old-messages",async (q,s)=>{
 
 io.on("connection",async (socket)=>{
 
-    let v = await getCache("users");
     console.log("a user connected !!!");
 
     socket.on("chat message",(msg)=>{
